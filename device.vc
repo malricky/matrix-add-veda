@@ -1,0 +1,59 @@
+#include<stdio.h>
+#include<veda_device.h>
+#include<time.h>
+
+#define NOW() ({ struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); ts; })
+#define TIME(start, end) ((double)(end.tv_sec - start.tv_sec) * 1000.0 + (double)(end.tv_nsec - start.tv_nsec) / 1000000.0)
+
+#define VEDA(err) check(err, __FILE__, __LINE__)
+
+void check(VEDAresult err, const char* file, const int line) {
+	if(err != VEDA_SUCCESS) {
+		const char *name, *str;
+		vedaGetErrorName	(err, &name);
+		vedaGetErrorString	(err, &str);
+		printf("%s: %s @ %s:%i\n", name, str, file, line);
+		exit(1);
+	}
+}
+
+double getElementAt(double *matrix,int x,int y,int row,int col){
+    return matrix[x*col+y];
+}
+
+void setElementAt(double val,double *matrix,int x,int y,int row,int col){
+    matrix[x*col+y] = val;
+}
+
+void print2DMatrix(double *matrix,int row,int col){
+
+    for(int i=0;i<row;i++){
+        for(int j=0;j<col;j++){
+                printf(" %lf ",*(matrix+(i*col)+j));
+        }
+        printf("\n");
+    }
+
+}
+
+void addMatrix(VEDAdeviceptr a,VEDAdeviceptr b,int row,int col){
+    struct timespec start, end;
+	start = NOW();
+
+    double *matrix_a;
+    double *matrix_b;
+    double val;
+    
+    VEDA(vedaMemPtr((void**)&matrix_a,a));
+    VEDA(vedaMemPtr((void**)&matrix_b,b));
+
+    for(int i=0;i<row*col;i++){
+            matrix_a[i] = matrix_a[i]+matrix_b[i];
+    }
+
+    end = NOW();
+	double elapsed = TIME(start, end);
+    printf("%d,%d,%lf\n",row,col,elapsed);
+    //printf("\nMatrix Size: %d X %d\n",row,col);
+    //printf("Total Device Elapsed time: %f ms\n",elapsed);
+}
